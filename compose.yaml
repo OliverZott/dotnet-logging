@@ -1,0 +1,7 @@
+﻿services:
+  dotnet-logging-sample1:
+    image: dotnet-logging-sample1
+    build:
+      context: .
+      dockerfile: dotnet-logging-sample1/Dockerfile
+

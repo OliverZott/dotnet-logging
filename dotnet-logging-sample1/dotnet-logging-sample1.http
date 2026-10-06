@@ -1,0 +1,11 @@
+@dotnet_logging_sample1_HostAddress = http://localhost:5076
+
+GET {{dotnet_logging_sample1_HostAddress}}/openapi/v1.json
+Accept: application/json
+
+###
+
+GET {{dotnet_logging_sample1_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

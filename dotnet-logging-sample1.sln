@@ -1,0 +1,23 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dotnet-logging-sample1", "dotnet-logging-sample1\dotnet-logging-sample1.csproj", "{EFD8B2A7-4125-43C0-B20A-A6ACE4E40C44}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{48435A12-DC9F-4B7C-B971-50DB8AFFC239}"
+	ProjectSection(SolutionItems) = preProject
+		compose.yaml = compose.yaml
+		.gitignore = .gitignore
+		README.md = README.md
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EFD8B2A7-4125-43C0-B20A-A6ACE4E40C44}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EFD8B2A7-4125-43C0-B20A-A6ACE4E40C44}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EFD8B2A7-4125-43C0-B20A-A6ACE4E40C44}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EFD8B2A7-4125-43C0-B20A-A6ACE4E40C44}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
