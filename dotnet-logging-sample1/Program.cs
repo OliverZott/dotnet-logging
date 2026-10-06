@@ -14,10 +14,14 @@ builder.Logging.Configure(options =>
 
 if (builder.Environment.IsDevelopment())
 {
-    // Human-readable console output with scopes while developing.
+    // Human-readable console output while developing. Scopes (trace/span id,
+    // request path, etc.) are still attached to each log entry internally -
+    // they're just not printed here to keep the console readable. They *do*
+    // show up when exporting to Seq/Aspire/OTLP, where they become
+    // separate, filterable/searchable fields instead of inline text.
     builder.Logging.AddSimpleConsole(options =>
     {
-        options.IncludeScopes = true;
+        options.IncludeScopes = false;
         options.SingleLine = true;
         options.TimestampFormat = "HH:mm:ss.fff ";
     });
