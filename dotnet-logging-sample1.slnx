@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".gitignore" />
+    <File Path="compose.yaml" />
+    <File Path="README.md" />
+  </Folder>
+  <Project Path="dotnet-logging-sample1/dotnet-logging-sample1.csproj" />
+</Solution>
