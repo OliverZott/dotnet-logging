@@ -5,3 +5,27 @@
       context: .
       dockerfile: dotnet-logging-sample1/Dockerfile
 
+  seq:
+    image: datalust/seq:latest
+    container_name: seq
+    environment:
+      - ACCEPT_EULA=Y
+      - SEQ_FIRSTRUN_NOAUTHENTICATION=true
+    ports:
+      - "15341:5341"  # ingestion (HTTP + OTLP) + API -> http://localhost:15341
+      - "8082:80"      # web UI -> http://localhost:8082
+    volumes:
+      - seq-data:/data
+
+  aspire-dashboard:
+    image: mcr.microsoft.com/dotnet/aspire-dashboard:9.0
+    container_name: aspire-dashboard
+    environment:
+      - DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS=true
+    ports:
+      - "18888:18888"  # web UI -> http://localhost:18888
+      - "4317:18889"   # OTLP gRPC ingestion -> use as OTEL_EXPORTER_OTLP_ENDPOINT
+
+volumes:
+  seq-data:
+

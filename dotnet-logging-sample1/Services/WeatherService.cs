@@ -24,9 +24,17 @@ public partial class WeatherService(ILogger<WeatherService> logger) : IWeatherSe
             Summary = Summaries[Random.Shared.Next(Summaries.Length)]
         }).ToArray();
 
-        foreach (var forecast in weatherCollection.Where(f => f.TemperatureC is <= -15 or >= 50))
+        foreach (var forecast in weatherCollection)
         {
-            LogExtremeTemperature(forecast.Date, forecast.TemperatureC);
+            // One structured event per forecast day: Date/TemperatureC/Summary
+            // land as separate, independently queryable fields in Seq/Aspire -
+            // e.g. `Summary = 'Scorching'` - instead of an opaque blob.
+            LogForecastEntry(forecast.Date, forecast.TemperatureC, forecast.Summary);
+
+            if (forecast.TemperatureC is <= -15 or >= 50)
+            {
+                LogExtremeTemperature(forecast.Date, forecast.TemperatureC);
+            }
         }
 
         LogForecastGenerated(weatherCollection.Length);
@@ -43,4 +51,7 @@ public partial class WeatherService(ILogger<WeatherService> logger) : IWeatherSe
 
     [LoggerMessage(EventId = 1003, Level = LogLevel.Warning, Message = "Extreme temperature forecast for {Date}: {TemperatureC}\u00b0C")]
     private partial void LogExtremeTemperature(DateOnly date, int temperatureC);
+
+    [LoggerMessage(EventId = 1004, Level = LogLevel.Debug, Message = "Forecast entry {Date}: {TemperatureC}\u00b0C, {Summary}")]
+    private partial void LogForecastEntry(DateOnly date, int temperatureC, string? summary);
 }

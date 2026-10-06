@@ -1,4 +1,8 @@
 using dotnet_logging_sample1.Services;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,6 +41,33 @@ else
         options.TimestampFormat = "yyyy-MM-ddTHH:mm:ss.fffZ";
     });
 }
+
+// OpenTelemetry: ship logs/traces/metrics over OTLP to whatever backend is
+// configured via the standard OTEL_EXPORTER_OTLP_ENDPOINT env var (e.g. the
+// Aspire dashboard on :4317, or Seq's OTLP ingestion endpoint). Console
+// logging above keeps working independently - this is an additional sink.
+var resourceBuilder = ResourceBuilder.CreateDefault()
+    .AddService(serviceName: builder.Environment.ApplicationName);
+
+builder.Logging.AddOpenTelemetry(options =>
+{
+    options.SetResourceBuilder(resourceBuilder);
+    options.IncludeScopes = true;
+    options.IncludeFormattedMessage = true;
+    options.ParseStateValues = true;
+    options.AddOtlpExporter();
+});
+
+builder.Services.AddOpenTelemetry()
+    .WithTracing(tracing => tracing
+        .SetResourceBuilder(resourceBuilder)
+        .AddAspNetCoreInstrumentation()
+        .AddOtlpExporter())
+    .WithMetrics(metrics => metrics
+        .SetResourceBuilder(resourceBuilder)
+        .AddAspNetCoreInstrumentation()
+        .AddRuntimeInstrumentation()
+        .AddOtlpExporter());
 
 // Add services to the container.
 
