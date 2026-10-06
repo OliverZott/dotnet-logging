@@ -17,6 +17,15 @@ public partial class WeatherService(ILogger<WeatherService> logger) : IWeatherSe
         const int days = 5;
         LogGeneratingForecast(days);
 
+        // Simulate an occasional upstream/transient failure (~1 in 5 calls) so
+        // the error path has something to log too - not just the happy path.
+        if (Random.Shared.Next(5) == 0)
+        {
+            var exception = new InvalidOperationException("Simulated weather provider outage.");
+            LogForecastProviderFailed(exception);
+            throw exception;
+        }
+
         var weatherCollection = Enumerable.Range(1, days).Select(index => new WeatherForecast
         {
             Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
@@ -54,4 +63,11 @@ public partial class WeatherService(ILogger<WeatherService> logger) : IWeatherSe
 
     [LoggerMessage(EventId = 1004, Level = LogLevel.Debug, Message = "Forecast entry {Date}: {TemperatureC}\u00b0C, {Summary}")]
     private partial void LogForecastEntry(DateOnly date, int temperatureC, string? summary);
+
+    // Passing the Exception as the first parameter captures the full stack
+    // trace alongside the structured message - this is what shows up as a
+    // dedicated "Exception" field/tab in Seq and Aspire, separate from the
+    // plain-text message.
+    [LoggerMessage(EventId = 1005, Level = LogLevel.Error, Message = "Weather forecast provider failed to respond")]
+    private partial void LogForecastProviderFailed(Exception exception);
 }
