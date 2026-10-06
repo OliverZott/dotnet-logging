@@ -1,25 +1,25 @@
+using dotnet_logging_sample1.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace dotnet_logging_sample1.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class WeatherForecastController : ControllerBase
+public partial class WeatherForecastController(IWeatherService weatherService, ILogger<WeatherForecastController> logger)
+    : ControllerBase
 {
-    private static readonly string[] Summaries =
-    [
-        "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-    ];
-
     [HttpGet(Name = "GetWeatherForecast")]
     public IEnumerable<WeatherForecast> Get()
     {
-        return Enumerable.Range(1, 5).Select(index => new WeatherForecast
-            {
-                Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-                TemperatureC = Random.Shared.Next(-20, 55),
-                Summary = Summaries[Random.Shared.Next(Summaries.Length)]
-            })
-            .ToArray();
+        LogRequestReceived();
+        var weatherCollection = weatherService.GetWeatherForecast().ToArray();
+        LogRequestCompleted(weatherCollection.Length);
+        return weatherCollection;
     }
+
+    [LoggerMessage(EventId = 2001, Level = LogLevel.Information, Message = "Weather forecast requested")]
+    private partial void LogRequestReceived();
+
+    [LoggerMessage(EventId = 2002, Level = LogLevel.Information, Message = "Weather forecast request completed with {Count} result(s)")]
+    private partial void LogRequestCompleted(int count);
 }
