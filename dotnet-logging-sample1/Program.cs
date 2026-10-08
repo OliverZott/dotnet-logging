@@ -49,6 +49,15 @@ else
 var resourceBuilder = ResourceBuilder.CreateDefault()
     .AddService(serviceName: builder.Environment.ApplicationName);
 
+// Second OTLP target: the Aspire dashboard (gRPC). The parameterless
+// AddOtlpExporter() calls below keep using the OTEL_EXPORTER_OTLP_* env vars (Seq).
+var aspireEndpoint = new Uri(builder.Configuration["ASPIRE_OTLP_ENDPOINT"] ?? "http://localhost:4317");
+void ConfigureAspire(OpenTelemetry.Exporter.OtlpExporterOptions o)
+{
+    o.Endpoint = aspireEndpoint;
+    o.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.Grpc;
+}
+
 builder.Logging.AddOpenTelemetry(options =>
 {
     options.SetResourceBuilder(resourceBuilder);
@@ -56,18 +65,21 @@ builder.Logging.AddOpenTelemetry(options =>
     options.IncludeFormattedMessage = true;
     options.ParseStateValues = true;
     options.AddOtlpExporter();
+    options.AddOtlpExporter(ConfigureAspire);
 });
 
 builder.Services.AddOpenTelemetry()
     .WithTracing(tracing => tracing
         .SetResourceBuilder(resourceBuilder)
         .AddAspNetCoreInstrumentation()
-        .AddOtlpExporter())
+        .AddOtlpExporter()
+        .AddOtlpExporter(ConfigureAspire))
     .WithMetrics(metrics => metrics
         .SetResourceBuilder(resourceBuilder)
         .AddAspNetCoreInstrumentation()
         .AddRuntimeInstrumentation()
-        .AddOtlpExporter());
+        .AddOtlpExporter()
+        .AddOtlpExporter(ConfigureAspire));
 
 // Add services to the container.
 
