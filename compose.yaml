@@ -4,6 +4,16 @@
     build:
       context: .
       dockerfile: dotnet-logging-sample1/Dockerfile
+    ports:
+      - "5080:8080"   # API -> http://localhost:5080/WeatherForecast (host 8080 is taken by Apache)
+    environment:
+      # Inside the compose network, use service names + container ports.
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://seq:5341/ingest/otlp
+      - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+      - ASPIRE_OTLP_ENDPOINT=http://aspire-dashboard:18889
+    depends_on:
+      - seq
+      - aspire-dashboard
 
   seq:
     image: datalust/seq:latest
