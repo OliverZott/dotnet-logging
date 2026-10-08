@@ -106,6 +106,17 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 var app = builder.Build();
 
+// Last-resort logging for exceptions outside the HTTP pipeline (background
+// threads, unobserved tasks). These can't be recovered - only recorded.
+AppDomain.CurrentDomain.UnhandledException += (_, e) =>
+{
+    app.Logger.LogCritical(e.ExceptionObject as Exception, "Unhandled exception, process terminating: {IsTerminating}", e.IsTerminating);
+    // Process dies right after this - flush batched OTLP logs first.
+    app.Services.GetService<LoggerProvider>()?.ForceFlush(5000);
+};
+TaskScheduler.UnobservedTaskException += (_, e) =>
+    app.Logger.LogError(e.Exception, "Unobserved task exception");
+
 app.UseHttpLogging();
 app.UseExceptionHandler();
 
