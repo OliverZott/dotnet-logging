@@ -1,4 +1,5 @@
 using dotnet_logging_sample1.Infrastructure;
+using Microsoft.AspNetCore.HttpLogging;
 using dotnet_logging_sample1.Services;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
@@ -90,11 +91,22 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddSingleton<IWeatherService, WeatherService>();
 
+// One structured log entry per request (method, path, status, duration).
+builder.Services.AddHttpLogging(options =>
+{
+    options.LoggingFields = HttpLoggingFields.RequestMethod
+        | HttpLoggingFields.RequestPath
+        | HttpLoggingFields.ResponseStatusCode
+        | HttpLoggingFields.Duration;
+    options.CombineLogs = true;
+});
+
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 var app = builder.Build();
 
+app.UseHttpLogging();
 app.UseExceptionHandler();
 
 // Configure the HTTP request pipeline.

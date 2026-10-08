@@ -15,7 +15,6 @@ public partial class WeatherService(ILogger<WeatherService> logger) : IWeatherSe
     public IEnumerable<WeatherForecast> GetWeatherForecast()
     {
         const int days = 5;
-        LogGeneratingForecast(days);
 
         // Simulate an occasional upstream failure (~1 in 5 calls). No logging
         // here - GlobalExceptionHandler logs it once and returns a 503.
@@ -36,18 +35,11 @@ public partial class WeatherService(ILogger<WeatherService> logger) : IWeatherSe
             LogExtremeTemperature(forecast.Date, forecast.TemperatureC);
         }
 
-        LogForecastGenerated(weatherCollection.Length);
         return weatherCollection;
     }
 
     // Source-generated structured logging: {Placeholders} become queryable
     // fields in Seq/Aspire.
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Generating weather forecast for {Days} day(s)")]
-    private partial void LogGeneratingForecast(int days);
-
-    [LoggerMessage(Level = LogLevel.Information, Message = "Generated {Count} weather forecast entries")]
-    private partial void LogForecastGenerated(int count);
-
     [LoggerMessage(Level = LogLevel.Warning, Message = "Extreme temperature forecast for {Date}: {TemperatureC}\u00b0C")]
     private partial void LogExtremeTemperature(DateOnly date, int temperatureC);
 }
