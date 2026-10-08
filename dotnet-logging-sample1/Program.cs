@@ -1,3 +1,4 @@
+using dotnet_logging_sample1.Infrastructure;
 using dotnet_logging_sample1.Services;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
@@ -89,7 +90,12 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddSingleton<IWeatherService, WeatherService>();
 
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+
 var app = builder.Build();
+
+app.UseExceptionHandler();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

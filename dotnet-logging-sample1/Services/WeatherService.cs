@@ -17,13 +17,11 @@ public partial class WeatherService(ILogger<WeatherService> logger) : IWeatherSe
         const int days = 5;
         LogGeneratingForecast(days);
 
-        // Simulate an occasional upstream/transient failure (~1 in 5 calls) so
-        // the error path has something to log too - not just the happy path.
+        // Simulate an occasional upstream failure (~1 in 5 calls). No logging
+        // here - GlobalExceptionHandler logs it once and returns a 503.
         if (Random.Shared.Next(5) == 0)
         {
-            var exception = new InvalidOperationException("Simulated weather provider outage.");
-            LogForecastProviderFailed(exception);
-            throw exception;
+            throw new InvalidOperationException("Simulated weather provider outage.");
         }
 
         var weatherCollection = Enumerable.Range(1, days).Select(index => new WeatherForecast
@@ -33,41 +31,23 @@ public partial class WeatherService(ILogger<WeatherService> logger) : IWeatherSe
             Summary = Summaries[Random.Shared.Next(Summaries.Length)]
         }).ToArray();
 
-        foreach (var forecast in weatherCollection)
+        foreach (var forecast in weatherCollection.Where(f => f.TemperatureC is <= -15 or >= 50))
         {
-            // One structured event per forecast day: Date/TemperatureC/Summary
-            // land as separate, independently queryable fields in Seq/Aspire -
-            // e.g. `Summary = 'Scorching'` - instead of an opaque blob.
-            LogForecastEntry(forecast.Date, forecast.TemperatureC, forecast.Summary);
-
-            if (forecast.TemperatureC is <= -15 or >= 50)
-            {
-                LogExtremeTemperature(forecast.Date, forecast.TemperatureC);
-            }
+            LogExtremeTemperature(forecast.Date, forecast.TemperatureC);
         }
 
         LogForecastGenerated(weatherCollection.Length);
         return weatherCollection;
     }
 
-    // Source-generated logging: zero-allocation on the hot path, strongly-typed
-    // parameters, and consistent EventIds for filtering/alerting downstream.
-    [LoggerMessage(EventId = 1001, Level = LogLevel.Debug, Message = "Generating weather forecast for {Days} day(s)")]
+    // Source-generated structured logging: {Placeholders} become queryable
+    // fields in Seq/Aspire.
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Generating weather forecast for {Days} day(s)")]
     private partial void LogGeneratingForecast(int days);
 
-    [LoggerMessage(EventId = 1002, Level = LogLevel.Information, Message = "Generated {Count} weather forecast entries")]
+    [LoggerMessage(Level = LogLevel.Information, Message = "Generated {Count} weather forecast entries")]
     private partial void LogForecastGenerated(int count);
 
-    [LoggerMessage(EventId = 1003, Level = LogLevel.Warning, Message = "Extreme temperature forecast for {Date}: {TemperatureC}\u00b0C")]
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Extreme temperature forecast for {Date}: {TemperatureC}\u00b0C")]
     private partial void LogExtremeTemperature(DateOnly date, int temperatureC);
-
-    [LoggerMessage(EventId = 1004, Level = LogLevel.Debug, Message = "Forecast entry {Date}: {TemperatureC}\u00b0C, {Summary}")]
-    private partial void LogForecastEntry(DateOnly date, int temperatureC, string? summary);
-
-    // Passing the Exception as the first parameter captures the full stack
-    // trace alongside the structured message - this is what shows up as a
-    // dedicated "Exception" field/tab in Seq and Aspire, separate from the
-    // plain-text message.
-    [LoggerMessage(EventId = 1005, Level = LogLevel.Error, Message = "Weather forecast provider failed to respond")]
-    private partial void LogForecastProviderFailed(Exception exception);
 }
